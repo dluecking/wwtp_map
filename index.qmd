@@ -1,0 +1,89 @@
+---
+title: "Giant Viruses in Danish WWTPs"
+---
+
+```{r, echo=FALSE}
+suppressPackageStartupMessages(library(leaflet))
+suppressPackageStartupMessages(library(data.table))
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(  library(stringr))
+
+invisible(data_wwtp <- readxl::read_excel("./wwtp_locations.xlsx"))
+den_lat <- 10.153119 #You can adjust the center by changing this val
+den_lon <- 56.12879 #You can adjust the center by changing this val
+denmark_geojson <- readLines("./denmark-detailed-boundary_896.geojson") %>% paste(collapse = "")
+
+
+
+# read gv_df --------------------------------------------------------------
+
+gv_df <- fread("gv_df.csv")
+gv_df <- gv_df %>% 
+  filter(!is.na(sample)) %>% 
+  filter(`status after manual inspection` != "remove")
+
+gv_df$sample_super_short <- str_remove(gv_df$sample, "\\_.*$")
+gv_df <- gv_df %>% 
+  select(sample_super_short, `manual order`)
+
+gv_df <- gv_df %>% 
+  filter(`manual order` != "euk") %>% 
+  filter(`manual order` != "bac") %>% 
+  filter(`manual order` != "missing markers")
+
+
+
+# add info to data_wwtp ---------------------------------------------------
+
+data_wwtp$label <- ""
+for(i in 1:nrow(data_wwtp)){
+  tmp_df <- gv_df[sample_super_short == data_wwtp$code[i]]
+  
+  if(nrow(tmp_df) < 1){
+    data_wwtp$label[i] <- "No GVs identified."
+    next
+  }
+  
+  label_string <- ""
+  for(order in unique(tmp_df$`manual order`)){
+    n <- nrow(tmp_df %>% filter(`manual order` == order))
+    label_string <- paste0(label_string, " ", order, " [", n, "]")
+  }
+  label_string <- str_trim(label_string, "both")
+  
+  data_wwtp$label[i] <- label_string
+}
+
+# the map itself
+
+leaflet() %>%
+  setView(lng = den_lat, lat = den_lon, zoom = 7) %>%
+  addMarkers(
+    lng = data_wwtp$longitude,
+    lat = data_wwtp$latitude,
+    label = data_wwtp$code,
+    labelOptions = labelOptions(
+      noHide = FALSE,
+      direction = "auto",
+      offset = c(10, -10),
+      textsize = "12px"
+    )
+  ) %>%
+  addProviderTiles("CartoDB.VoyagerNoLabels") %>%
+  addGeoJSON(
+    geojson = denmark_geojson,
+    fillColor = "blue",
+    weight = 2,
+    color = "blue",
+    fillOpacity = 0.1
+  ) %>%  # Highlight Denmark in blue
+  addCircles(
+    data = data_wwtp,
+    color = "#F60D1D",
+    fillColor = "#F60D1D",
+    fillOpacity = 0.5,
+    weight = 15,
+    popup = paste0("<strong>Sample: </strong>", data_wwtp$code, "<br><strong>GVs identified: </strong>", data_wwtp$label, "<br>")
+  )
+
+```
