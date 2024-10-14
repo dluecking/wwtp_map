@@ -1,8 +1,9 @@
 project:
   type: website
+  output-dir: docs
 
 website:
-  title: "dom_leaflet"
+  title: "Roscoff 2024 - DL"
   navbar:
     left:
       - href: index.qmd
