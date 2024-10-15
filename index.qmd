@@ -2,7 +2,7 @@
 title: "Giant Viruses in Danish WWTPs"
 ---
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 suppressPackageStartupMessages(library(leaflet))
 suppressPackageStartupMessages(library(data.table))
 suppressPackageStartupMessages(library(dplyr))
