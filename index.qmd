@@ -85,7 +85,7 @@ leaflet() %>%
     fillColor = "#F60D1D",
     fillOpacity = 0.5,
     weight = 15,
-    popup = paste0("<strong>Sample: </strong>", data_wwtp$code, "<br><strong>GVs identified: </strong>", data_wwtp$label, "<br>")
+    popup = paste0("<strong>Sample: </strong>", data_wwtp$code, "<br><strong>GVs identified: </strong>", data_wwtp$label, "<br> <img src = 'img/pandoravirales alt='My Happy SVG'/>")
   )
 
 ```
