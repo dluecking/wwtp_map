@@ -1,8 +1,8 @@
 ---
 title: "Giant Viruses in Danish WWTPs"
 ---
-Click on the red circles to show more information. 
----
+
+For taxonomic and additional information click on the colored circles. Color indicates if *Nucleocytoviricota* were identified (**green** = NCLDV identified, **brown** = nothing found).
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 suppressPackageStartupMessages(library(leaflet))
@@ -14,7 +14,6 @@ invisible(data_wwtp <- readxl::read_excel("./wwtp_locations.xlsx"))
 den_lat <- 10.153119 #You can adjust the center by changing this val
 den_lon <- 56.12879 #You can adjust the center by changing this val
 denmark_geojson <- readLines("./denmark-detailed-boundary_896.geojson") %>% paste(collapse = "")
-
 
 
 # read gv_df --------------------------------------------------------------
@@ -33,6 +32,9 @@ gv_df <- gv_df %>%
   filter(`manual order` != "bac") %>% 
   filter(`manual order` != "missing markers")
 
+
+sample_df <- fread("sample_info.csv") %>% 
+  mutate(code = str_remove(sample, "\\_.*$"))
 
 
 # add info to data_wwtp ---------------------------------------------------
@@ -56,6 +58,16 @@ for(i in 1:nrow(data_wwtp)){
   data_wwtp$label[i] <- label_string
 }
 
+# add sample info
+data_wwtp$sample_total_contigs <- sample_df$contigs[match(data_wwtp$code, sample_df$code)]
+
+
+
+
+
+# add color to fill circles later
+data_wwtp$color <- if_else(data_wwtp$label == "No GVs identified.", "#a6611a", "#018571", missing = "lala")
+
 # the map itself
 
 leaflet() %>%
@@ -64,28 +76,29 @@ leaflet() %>%
     lng = data_wwtp$longitude,
     lat = data_wwtp$latitude,
     label = data_wwtp$code,
+    popup = paste0("<strong>Sample: </strong>", data_wwtp$code, "<br> <strong>Number of contigs in sample: </strong>", data_wwtp$sample_total_contigs, "<br> <strong>GVs identified: </strong>", data_wwtp$label, "<br>"),
     labelOptions = labelOptions(
       noHide = FALSE,
       direction = "auto",
       offset = c(10, -10),
-      textsize = "12px"
+      textsize = "14px"
     )
   ) %>%
   addProviderTiles("CartoDB.VoyagerNoLabels") %>%
   addGeoJSON(
     geojson = denmark_geojson,
-    fillColor = "blue",
+    fillColor = "#DDD78D",
     weight = 2,
-    color = "blue",
+    color = "black",
     fillOpacity = 0.1,
   ) %>%  # Highlight Denmark in blue
   addCircles(
     data = data_wwtp,
-    color = "#F60D1D",
-    fillColor = "#F60D1D",
+    color = data_wwtp$color,
+    fillColor = data_wwtp$color,
     fillOpacity = 0.5,
     weight = 15,
-    popup = paste0("<strong>Sample: </strong>", data_wwtp$code, "<br><strong>GVs identified: </strong>", data_wwtp$label, "<br> <img src = 'img/asfuvirales.png' alt='Pando'/>")
+    popup = paste0("<strong>Sample: </strong>", data_wwtp$code, "<br> <strong>Number of contigs in sample: </strong>", data_wwtp$sample_total_contigs, "<br> <strong>GVs identified: </strong>", data_wwtp$label, "<br>")
   )
 
 ```
