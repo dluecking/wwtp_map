@@ -2,7 +2,7 @@
 title: "Giant Viruses in Danish WWTPs"
 ---
 
-For taxonomic and additional information click on the colored circles. Color indicates if *Nucleocytoviricota* were identified (**green** = NCLDV identified, **brown** = nothing found).
+For taxonomic and additional sample information click on each sample. Color indicates if *Nucleocytoviricota* were identified (**green** = NCLDV identified, **brown** = nothing found).
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 suppressPackageStartupMessages(library(leaflet))
