@@ -1,18 +1,10 @@
 ---
-title: "Giant Viruses in Danish WWTPs"
+title: "Dominik Luecking (Veelab) @ ViBioM 2025"
 ---
 
-\![Graphical Abstract](graphical_abstract.png){width=90%}
+![Graphical Abstract](graphical_abstract.png){fig-align="center"}
 
-For sample information click on each sample.
-
-Color indicates if *Nucleocytoviricota* were identified (**green** = NCLDV identified, **brown** = nothing found).
-
-GV = Giant Viruses
-
-PLV = Polinton-like viruses
-
-MGE = Mobile genetic element
+Below is a rendered map of all sampling stations of waste water treatment plants used in this study. The color of the pin indicates if *Nucleocytoviricota* were identified (**green** = NCLDV identified, **brown** = nothing found).
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 suppressPackageStartupMessages(library(leaflet))
@@ -144,3 +136,9 @@ leaflet() %>%
   )
 
 ```
+
+GV = Giant Viruses, NCLDV = Nucleocytoviricota, PLV = Polinton-like viruses, MGE = Mobile genetic element
+
+**Contact:**
+
+Email: dominik.luecking\@univie.ac.at, bluesky: \@dominikluecking.bsky.social
