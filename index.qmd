@@ -2,7 +2,15 @@
 title: "Giant Viruses in Danish WWTPs"
 ---
 
-For taxonomic and additional sample information click on each sample. Color indicates if *Nucleocytoviricota* were identified (**green** = NCLDV identified, **brown** = nothing found).
+For sample information click on each sample.
+
+Color indicates if *Nucleocytoviricota* were identified (**green** = NCLDV identified, **brown** = nothing found).
+
+GV = Giant Viruses
+
+PLV = Polinton-like viruses
+
+MGE = Mobile genetic element
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 suppressPackageStartupMessages(library(leaflet))
@@ -16,21 +24,34 @@ den_lon <- 56.12879 #You can adjust the center by changing this val
 denmark_geojson <- readLines("./denmark-detailed-boundary_896.geojson") %>% paste(collapse = "")
 
 
+# read vph data -----------------------------------------------------------
+vph_df <- fread("vph_data.csv")
+
+# read plv data -----------------------------------------------------------
+plv_df <- fread("plv_data.csv")
+
+# read mge data -----------------------------------------------------------
+mge_df <- fread("mge_data.csv")
+
 # read gv_df --------------------------------------------------------------
 
-gv_df <- fread("gv_df.csv")
-gv_df <- gv_df %>% 
-  filter(!is.na(sample)) %>% 
-  filter(`status after manual inspection` != "remove")
+gv_df <- fread("GV Genome Overview - Final GVs overview.csv") %>% 
+  select(sample, completeness)
 
-gv_df$sample_super_short <- str_remove(gv_df$sample, "\\_.*$")
-gv_df <- gv_df %>% 
-  select(sample_super_short, `manual order`)
 
-gv_df <- gv_df %>% 
-  filter(`manual order` != "euk") %>% 
-  filter(`manual order` != "bac") %>% 
-  filter(`manual order` != "missing markers")
+# gv_df <- fread("gv_df.csv")
+# gv_df <- gv_df %>% 
+  # filter(!is.na(sample)) %>% 
+  # filter(`status after manual inspection` != "remove")
+
+# gv_df$sample_super_short <- str_remove(gv_df$sample, "\\_.*$")
+# gv_df <- gv_df %>% 
+  # select(sample_super_short, `manual order`)
+
+# gv_df <- gv_df %>% 
+  # filter(`manual order` != "euk") %>% 
+  # filter(`manual order` != "bac") %>% 
+  # filter(`manual order` != "missing markers")
 
 
 sample_df <- fread("sample_info.csv") %>% 
@@ -41,19 +62,20 @@ sample_df <- fread("sample_info.csv") %>%
 
 data_wwtp$label <- ""
 for(i in 1:nrow(data_wwtp)){
-  tmp_df <- gv_df[sample_super_short == data_wwtp$code[i]]
+  tmp_df <- gv_df[sample == data_wwtp$code[i]]
   
   if(nrow(tmp_df) < 1){
     data_wwtp$label[i] <- "No GVs identified."
     next
   }
   
-  label_string <- ""
-  for(order in unique(tmp_df$`manual order`)){
-    n <- nrow(tmp_df %>% filter(`manual order` == order))
-    label_string <- paste0(label_string, " ", order, " [", n, "]")
-  }
-  label_string <- str_trim(label_string, "both")
+  N_COMPLETE <- tmp_df %>% 
+    filter(completeness == "complete") %>% 
+    nrow()
+  N_TOTAL <- tmp_df %>% 
+    nrow()
+  label_string <- paste0(N_TOTAL, " (", N_COMPLETE, " complete)")
+
   
   data_wwtp$label[i] <- label_string
 }
@@ -61,7 +83,20 @@ for(i in 1:nrow(data_wwtp)){
 # add sample info
 data_wwtp$sample_total_contigs <- sample_df$contigs[match(data_wwtp$code, sample_df$code)]
 
+# add plv vph and mge info ------------------------------------------------------------------
 
+data_wwtp$vph <- 0
+data_wwtp$plv <- 0
+data_wwtp$mge <- mge_df$N[match(data_wwtp$code, mge_df$sample)]
+
+for(i in 1:nrow(data_wwtp)){
+  data_wwtp$vph[i] <- vph_df %>% 
+    filter(sample == data_wwtp$code[i]) %>% 
+    nrow()
+  data_wwtp$plv[i] <- plv_df %>% 
+    filter(sample == data_wwtp$code[i]) %>% 
+    nrow()
+}
 
 
 
@@ -76,7 +111,12 @@ leaflet() %>%
     lng = data_wwtp$longitude,
     lat = data_wwtp$latitude,
     label = data_wwtp$code,
-    popup = paste0("<strong>Sample: </strong>", data_wwtp$code, "<br> <strong>Number of contigs in sample: </strong>", data_wwtp$sample_total_contigs, "<br> <strong>GVs identified: </strong>", data_wwtp$label, "<br>"),
+    popup = paste0("<strong>Sample: </strong>", data_wwtp$code, "<br> 
+                   <strong>Number of contigs in sample: </strong>", data_wwtp$sample_total_contigs, "<br> 
+                   <strong>GVs identified: </strong>", data_wwtp$label, "<br> 
+                   <strong>PLVs identified: </strong>", data_wwtp$plv, "<br>
+                   <strong>Virophages identified: </strong>", data_wwtp$vph, "<br> 
+                   <strong>Recombinases (MGEs) identified: </strong>", data_wwtp$mge),
     labelOptions = labelOptions(
       noHide = FALSE,
       direction = "auto",
@@ -98,7 +138,7 @@ leaflet() %>%
     fillColor = data_wwtp$color,
     fillOpacity = 0.5,
     weight = 15,
-    popup = paste0("<strong>Sample: </strong>", data_wwtp$code, "<br> <strong>Number of contigs in sample: </strong>", data_wwtp$sample_total_contigs, "<br> <strong>GVs identified: </strong>", data_wwtp$label, "<br>")
+    popup = paste0("<strong>Sample: </strong>", data_wwtp$code, "<br> <strong>Number of contigs in sample: </strong>", data_wwtp$sample_total_contigs, "<br> <strong>GVs identified: </strong>", data_wwtp$label, "<br> <strong>PLVs identified: </strong>", data_wwtp$plv, "<br> <strong>Virophages identified: </strong>", data_wwtp$vph, "<br> <strong>Recombinases (MGEs) identified: </strong>", data_wwtp$mge)
   )
 
 ```
